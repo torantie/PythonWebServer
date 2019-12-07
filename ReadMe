@@ -1,0 +1,30 @@
+Install the following:
+
+OpenCV python bindings:
+
+    Pip: pip install opencv-python
+    Or conda: install-c meno opencv3
+
+CMake
+
+    Pip: pip install cmake
+
+dlib:
+
+    First try this:
+        Pip: pip install dlib --verbose
+    If that doesn't work, try this:
+        Download source: dlib (http://dlib.net/)
+        Unzip, open terminal in root folder and run: python setup.py
+
+face_recognition
+
+    Pip: pip install face_recognition
+
+TensorFlow:
+
+    Pip: pip install tensorflow
+
+TensorFlow:
+
+    Pip: pip install keras
