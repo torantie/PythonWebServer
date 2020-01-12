@@ -24,7 +24,7 @@ class UltraSonicSensor:
         GPIO.setup(self.GPIO_TRIGGER, GPIO.OUT)
         GPIO.setup(self.GPIO_ECHO, GPIO.IN)
 
-    def __distance(self):
+    def distance(self):
         # setze Trigger auf HIGH
         GPIO.output(self.GPIO_TRIGGER, True)
 
@@ -57,24 +57,23 @@ class UltraSonicSensor:
 
         return False
 
-    def __observe(self):
+    def observe(self):
         try:
-            while self.__is_running:
+            while self.is_running:
                 current_distance = self.distance()
                 print("measured distance = %.1f cm" % current_distance)
                 time.sleep(1)
 
-                if self.is_using_fridge(5):
+                if self.is_using_fridge(15):
                     self.emotion_calc.calc_and_save_emotion()
 
-        except:
-            print("Measurement interrupted: " + sys.exc_info()[0])
+        finally:
             GPIO.cleanup()
 
     def start(self):
-        self.__is_running = True
+        self.is_running = True
         t = threading.Thread(target=self.observe())
         t.start()
 
     def stop(self):
-        self.__is_running = False
+        self.is_running = False

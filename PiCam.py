@@ -29,8 +29,6 @@ def take_pictures(n, delay):
             # use the following...
             image = image[:, :, ::-1]
             images.append(image)
-    except:
-        print("Error in take_pictures: " + sys.exc_info()[0])
     finally:
         camera.close()
         return images
