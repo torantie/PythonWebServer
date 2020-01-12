@@ -8,13 +8,14 @@ from EmotionCalculator import EmotionCalculator
 
 
 class UltraSonicSensor:
-    # GPIO Pins zuweisen
-    __GPIO_TRIGGER = 18
-    __GPIO_ECHO = 24
-    __current_distance = 0
-    __is_running = False;
 
     def __init__(self, emotion_calc: EmotionCalculator):
+        # GPIO Pins zuweisen
+        self.GPIO_TRIGGER = 18
+        self.GPIO_ECHO = 24
+        self.current_distance = 0
+        self.is_running = False;
+
         self.emotion_calc = emotion_calc
         # GPIO Modus (BOARD / BCM)
         GPIO.setmode(GPIO.BCM)
