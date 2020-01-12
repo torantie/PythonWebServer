@@ -3,12 +3,12 @@ from flask import jsonify
 import os
 
 from EmotionCalculator import EmotionCalculator
-# from UltraSonicSensor import UltraSonicSensor
+from UltraSonicSensor import UltraSonicSensor
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 app = Flask(__name__)
 emotion_calc = EmotionCalculator()
-# sensor = UltraSonicSensor(emotion_calc)
+sensor = UltraSonicSensor(emotion_calc)
 contents = {'Eier': 1, 'Milch': 3}
 
 
@@ -36,6 +36,6 @@ def get_locations_data():
 # threaded false aufgrund eines fehlers in keras (https://github.com/keras-team/keras/issues/13353)
 # könnte auch anderen fix geben
 if __name__ == '__main__':
-    # sensor.start()
+    sensor.start()
     app.run(host="0.0.0.0", port=5000, threaded=False)
 

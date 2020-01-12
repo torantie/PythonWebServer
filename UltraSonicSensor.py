@@ -2,6 +2,7 @@
 import RPi.GPIO as GPIO
 import time
 import threading
+import sys
 
 from EmotionCalculator import EmotionCalculator
 
@@ -11,8 +12,9 @@ class UltraSonicSensor:
     __GPIO_TRIGGER = 18
     __GPIO_ECHO = 24
     __current_distance = 0
+    __is_running = False;
 
-    def __init__(self, emotion_calc:EmotionCalculator):
+    def __init__(self, emotion_calc: EmotionCalculator):
         self.emotion_calc = emotion_calc
         # GPIO Modus (BOARD / BCM)
         GPIO.setmode(GPIO.BCM)
@@ -56,19 +58,22 @@ class UltraSonicSensor:
 
     def __observe(self):
         try:
-            while True:
+            while self.__is_running:
                 current_distance = self.distance()
-                print ("measured distance = %.1f cm" % current_distance)
+                print("measured distance = %.1f cm" % current_distance)
                 time.sleep(1)
 
                 if self.is_using_fridge(5):
                     self.emotion_calc.calc_and_save_emotion()
 
-            # Beim Abbruch durch STRG+C resetten
-        except KeyboardInterrupt:
-            print("Measurement interrupted.")
+        except:
+            print("Measurement interrupted: " + sys.exc_info()[0])
             GPIO.cleanup()
 
     def start(self):
+        self.__is_running = True
         t = threading.Thread(target=self.observe())
         t.start()
+
+    def stop(self):
+        self.__is_running = False

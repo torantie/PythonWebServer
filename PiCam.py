@@ -5,6 +5,7 @@ import io
 import time
 import cv2
 import numpy as np
+import sys
 
 
 # https://picamera.readthedocs.io/en/release-1.10/recipes1.html#capturing-to-a-pil-image
@@ -27,8 +28,9 @@ def take_pictures(n, delay):
             # OpenCV returns an array with data in BGR order. If you want RGB instead
             # use the following...
             image = image[:, :, ::-1]
-            images.push(image)
-
+            images.append(image)
+    except:
+        print("Error in take_pictures: " + sys.exc_info()[0])
     finally:
         camera.close()
         return images
