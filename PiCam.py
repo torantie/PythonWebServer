@@ -16,7 +16,7 @@ def take_pictures(n, delay):
 
         camera.start_preview()
 
-        for i in n:
+        for i in range(0, n):
             # Create the in-memory stream
             stream = io.BytesIO()
             camera.capture(stream, format='jpeg')
@@ -29,6 +29,8 @@ def take_pictures(n, delay):
             # use the following...
             image = image[:, :, ::-1]
             images.append(image)
+    except Exception as e:
+        print(e)
     finally:
         camera.close()
         return images

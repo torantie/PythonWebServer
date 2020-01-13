@@ -66,7 +66,8 @@ class UltraSonicSensor:
 
                 if self.is_using_fridge(15):
                     self.emotion_calc.calc_and_save_emotion()
-
+        except Exception as e:
+            print(e)
         finally:
             GPIO.cleanup()
 
