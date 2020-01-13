@@ -1,9 +1,8 @@
 #https://tutorials-raspberrypi.de/entfernung-messen-mit-ultraschallsensor-hc-sr04/
 import RPi.GPIO as GPIO
 import time
-import threading
-import sys
 
+from BrightnessSensor import BrightnessSensor
 from EmotionCalculator import EmotionCalculator
 
 
@@ -15,7 +14,9 @@ class UltraSonicSensor:
         self.GPIO_ECHO = 24
         self.current_distance = 0
         self.is_running = False;
+        self.possible_ingredients = ["Milch", "Eier", "Brot"]
 
+        self.brightnessSensor = BrightnessSensor()
         self.emotion_calc = emotion_calc
         # GPIO Modus (BOARD / BCM)
         GPIO.setmode(GPIO.BCM)
@@ -25,56 +26,42 @@ class UltraSonicSensor:
         GPIO.setup(self.GPIO_ECHO, GPIO.IN)
 
     def distance(self):
-        # setze Trigger auf HIGH
-        GPIO.output(self.GPIO_TRIGGER, True)
+        try:
+            # setze Trigger auf HIGH
+            GPIO.output(self.GPIO_TRIGGER, True)
 
-        # setze Trigger nach 0.01ms aus LOW
-        time.sleep(0.00001)
-        GPIO.output(self.GPIO_TRIGGER, False)
+            # setze Trigger nach 0.01ms aus LOW
+            time.sleep(0.00001)
+            GPIO.output(self.GPIO_TRIGGER, False)
 
-        start = time.time()
-        stop = time.time()
-
-        # speichere start
-        while GPIO.input(self.GPIO_ECHO) == 0:
             start = time.time()
-
-        # speichere Ankunftszeit
-        while GPIO.input(self.GPIO_ECHO) == 1:
             stop = time.time()
 
-        # Zeit Differenz zwischen Start und Ankunft
-        time_elapsed = stop - start
-        # mit der Schallgeschwindigkeit (34300 cm/s) multiplizieren
-        # und durch 2 teilen, da hin und zurueck
-        distance = (time_elapsed * 34300) / 2
+            # speichere start
+            while GPIO.input(self.GPIO_ECHO) == 0:
+                start = time.time()
 
-        return distance
+            # speichere Ankunftszeit
+            while GPIO.input(self.GPIO_ECHO) == 1:
+                stop = time.time()
 
-    def is_using_fridge(self, threshold):
+            # Zeit Differenz zwischen Start und Ankunft
+            time_elapsed = stop - start
+            # mit der Schallgeschwindigkeit (34300 cm/s) multiplizieren
+            # und durch 2 teilen, da hin und zurueck
+            distance = (time_elapsed * 34300) / 2
+            return distance
+        except Exception as e:
+            print(e)
+            GPIO.cleanup()
+
+
+def is_using_fridge(self, threshold):
+        self.current_distance = self.distance()
+        print("measured distance = %.1f cm" % self.current_distance)
         if self.current_distance < threshold:
             return True
 
         return False
 
-    def observe(self):
-        try:
-            while self.is_running:
-                current_distance = self.distance()
-                print("measured distance = %.1f cm" % current_distance)
-                time.sleep(1)
 
-                if self.is_using_fridge(15):
-                    self.emotion_calc.calc_and_save_emotion()
-        except Exception as e:
-            print(e)
-        finally:
-            GPIO.cleanup()
-
-    def start(self):
-        self.is_running = True
-        t = threading.Thread(target=self.observe())
-        t.start()
-
-    def stop(self):
-        self.is_running = False
