@@ -16,6 +16,7 @@ ultrasonic_sensor = UltraSonicSensor(emotion_calc)
 # 3 sensors; pins 1,2,3; threshold 12000
 brightness_sensor = BrightnessSensor(3, range(1, 4), 12000)
 # array position corresponds  to brightness sensor e.g. sensor 0 = possible_ingredients[0] = "Eier"
+# if ingredients change, also change contents dictionary in calc_fridge_content()
 possible_ingredients = ["Eier", "Milch", "Brot"]
 is_observing = False
 
@@ -50,6 +51,8 @@ def observe():
         if ultrasonic_sensor.is_using_fridge(15):
             print("User is in front of fridge.")
             emotion_calc.calc_and_save_emotion()
+        else:
+            emotion_calc.reset_predicted_emotion_dict()
 
 
 def calc_fridge_content():
