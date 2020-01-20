@@ -20,19 +20,19 @@ def take_pictures(n, delay):
             # Create the in-memory stream
             stream = io.BytesIO()
             camera.capture(stream, format='jpeg')
-            time.sleep(delay)
             # Construct a numpy array from the stream
             data = np.fromstring(stream.getvalue(), dtype=np.uint8)
             # "Decode" the image from the array, preserving colour
             image = cv2.imdecode(data, 1)
-            # OpenCV returns an array with data in BGR order. If you want RGB instead
-            # use the following...
-            image = image[:, :, ::-1]
+
             images.append(image)
+            time.sleep(delay)
+
+
     except Exception as e:
         print(e)
     finally:
         camera.close()
-        return images
+        return np.array(images)
 
 

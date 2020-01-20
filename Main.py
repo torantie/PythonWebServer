@@ -15,7 +15,6 @@ emotion_calc = EmotionCalculator()
 ultrasonic_sensor = UltraSonicSensor(emotion_calc)
 # 3 sensors; pins 1,2,3; threshold 12000
 brightness_sensor = BrightnessSensor(3, range(1, 4), 12000)
-contents = {'Eier': 1, 'Milch': 3, 'Brot': 0}
 # array position corresponds  to brightness sensor e.g. sensor 0 = possible_ingredients[0] = "Eier"
 possible_ingredients = ["Eier", "Milch", "Brot"]
 is_observing = False
@@ -23,6 +22,7 @@ is_observing = False
 
 @app.route('/')
 def get_data():
+    contents = calc_fridge_content()
     return jsonify({'emotion': emotion_calc.current_emotion, 'contents': contents});
 
 
@@ -39,6 +39,7 @@ def calc_emotion_data():
 
 @app.route('/contents')
 def get_locations_data():
+    contents = calc_fridge_content()
     return jsonify({'contents': contents})
 
 
@@ -47,25 +48,48 @@ def observe():
         time.sleep(1)
 
         if ultrasonic_sensor.is_using_fridge(15):
+            print("User is in front of fridge.")
             emotion_calc.calc_and_save_emotion()
-            for i, is_sensor_occupied in enumerate(brightness_sensor.get_occupied_sensors()):
-                if is_sensor_occupied:
-                    print("sensor " + str(i) + " is occupied. Add 1 to " + possible_ingredients[i])
-                    contents[possible_ingredients[i]] += 1
-                    print("fridge has " + str(contents[possible_ingredients[i]]) + " of ingredient "
-                          + possible_ingredients[i])
+
+
+def calc_fridge_content():
+    occupied_sensors = brightness_sensor.get_occupied_sensors()
+    contents = {'Eier': 0, 'Milch': 0, 'Brot': 0}
+
+    if brightness_sensor.occupied_sensors_changed(occupied_sensors):
+        print("Occupied sensors changed.")
+
+        for key, value in contents.items():
+            contents[key] = 0
+            # print("In reset:" + str(key) + " "+ str(contents[key]))
+
+        for i, is_sensor_occupied in enumerate(occupied_sensors):
+            if is_sensor_occupied:
+                # print("sensor " + str(i) + " is occupied. Add 1 to " + possible_ingredients[i])
+                contents[possible_ingredients[i]] += 1
+
+                print("fridge has " + str(contents[possible_ingredients[i]]) + " of ingredient "
+                      + possible_ingredients[i])
+
+    else:
+        print("Occupied sensors did not change.")
+
+    brightness_sensor.set_last_known_occupied_sensors(occupied_sensors)
+    return contents
 
 
 def start_observing():
     global is_observing
     is_observing = True
-    t = threading.Thread(target=observe())
+    t = threading.Thread(target=observe)
     t.start()
 
 
 def stop_observing():
     global is_observing
     is_observing = False
+
+
 
 
 # threaded false aufgrund eines fehlers in keras (https://github.com/keras-team/keras/issues/13353)

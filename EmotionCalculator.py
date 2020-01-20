@@ -3,20 +3,29 @@ from builtins import dict, zip, len, print
 import cv2
 import face_recognition
 import numpy as np
-from keras.models import load_model
+import tensorflow as tf
+from tensorflow.keras.backend import set_session
+from tensorflow.keras.models import load_model
 from keras.preprocessing.image import img_to_array
 from timeit import default_timer as timer
 from PiCam import take_pictures
 
 
 class EmotionCalculator:
-    current_emotion = "Happy"
-    # Model from https://github.com/omar178/Emotion-recognition.git
-    model = load_model("./models/_mini_XCEPTION.102-0.66.hdf5")
-    model_dim = (64, 64)
-    emotion_dict = {'Angry': 0, 'Disgust': 1, 'Fear': 2, 'Happy': 3, 'Sad': 4, 'Surprise': 5, 'Neutral': 6}
+    def __init__(self):
+        self.current_emotion = "Happy"
+        # Model from https://github.com/omar178/Emotion-recognition.git
+        self.sess = tf.Session()
+        self.graph = tf.get_default_graph()
+        set_session(self.sess)
+        self.model = load_model("./models/_mini_XCEPTION.102-0.66.hdf5")
+        self.model._make_predict_function()
 
-    label_map = dict((v, k) for k, v in emotion_dict.items())
+        self.model_dim = (64, 64)
+        self.emotion_dict = {'Angry': 0, 'Disgust': 1, 'Fear': 2, 'Happy': 3, 'Sad': 4, 'Surprise': 5, 'Neutral': 6}
+        self.label_map = dict((v, k) for k, v in self.emotion_dict.items())
+
+
 
     def calc_and_save_emotion(self):
         self.current_emotion = self.calculate_emotion_pi_cam()
@@ -66,7 +75,7 @@ class EmotionCalculator:
 
     def calculate_emotion_pi_cam(self):
         predicted_emotions_dictionary = {}
-        pictures = take_pictures(5, 0)
+        pictures = take_pictures(2, 0.001)
 
         for picture in pictures:
             rects, faces = self.face_detector(picture)
@@ -96,13 +105,15 @@ class EmotionCalculator:
     def calc_predicted_emotions(self, faces, predicted_emotions_dictionary):
         if np.sum([faces[0]]) != 0.0:
             for face in faces:
-                predicted_class = np.argmax(self.model.predict(face))
-                predicted_label = self.label_map[predicted_class]
+                with self.graph.as_default():
+                    set_session(self.sess)
+                    predicted_class = np.argmax(self.model.predict(face))
+                    predicted_label = self.label_map[predicted_class]
 
-                if predicted_label in predicted_emotions_dictionary:
-                    predicted_emotions_dictionary[predicted_label] += 1
-                else:
-                    predicted_emotions_dictionary[predicted_label] = 0
+                    if predicted_label in predicted_emotions_dictionary:
+                        predicted_emotions_dictionary[predicted_label] += 1
+                    else:
+                        predicted_emotions_dictionary[predicted_label] = 0
 
     def get_max_occurence_emotion(self, predicted_emotions_dictionary):
         max_occurrence_emotion = ""
@@ -118,9 +129,13 @@ class EmotionCalculator:
     # face detection function
     def face_detector(self, img):
         # convert image to grayscale and find faces
-        img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        faces = face_recognition.face_locations(img_gray)
-
+        # print("convert image to grayscale and find faces")
+        # scale picture
+        small_image = cv2.resize(img, (0,0), fx=0.15, fy=0.15)
+        img_gray = cv2.cvtColor(small_image, cv2.COLOR_BGR2GRAY)
+        # print("after grayscale, before faces")
+        faces = face_recognition.face_locations(img_gray,1,"hog")
+        # print("converted image to grayscale and find faces")
         # return zeros if there are no faces detected
         if len(faces) == 0:
             return (0, 0, 0, 0), np.zeros(self.model_dim, np.uint8)
@@ -134,13 +149,15 @@ class EmotionCalculator:
         for (top, right, bottom, left) in faces:
             cv2.rectangle(img, (left, top), (right, bottom), (255, 0, 0), 2)
             rect.append((top, right, bottom, left))
-
+            # print("left: "+str(left)+ " top: " + str(top) + " right: " + str(right) +" bottom: " + str(bottom))
             # resize the face image and preprocess to fit the model requirements
+            # print("before resize the face image and preprocess to fit the model requirements")
             face = img_gray[top:bottom, left:right]
             face = cv2.resize(face, self.model_dim, interpolation=cv2.INTER_AREA)
             face = face.astype("float") / 255.0
             face = img_to_array(face)
             face = np.expand_dims(face, axis=0)
             face_img.append(face)
+            # print("after resize the face image and preprocess to fit the model requirements")
 
         return rect, face_img

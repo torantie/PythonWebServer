@@ -2,7 +2,6 @@
 import RPi.GPIO as GPIO
 import time
 
-from BrightnessSensor import BrightnessSensor
 from EmotionCalculator import EmotionCalculator
 
 
@@ -16,7 +15,6 @@ class UltraSonicSensor:
         self.is_running = False;
         self.possible_ingredients = ["Milch", "Eier", "Brot"]
 
-        self.brightnessSensor = BrightnessSensor()
         self.emotion_calc = emotion_calc
         # GPIO Modus (BOARD / BCM)
         GPIO.setmode(GPIO.BCM)
@@ -56,9 +54,9 @@ class UltraSonicSensor:
             GPIO.cleanup()
 
 
-def is_using_fridge(self, threshold):
+    def is_using_fridge(self, threshold):
         self.current_distance = self.distance()
-        print("measured distance = %.1f cm" % self.current_distance)
+        # print("measured distance = %.1f cm" % self.current_distance)
         if self.current_distance < threshold:
             return True
 
